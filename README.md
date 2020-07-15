@@ -21,4 +21,4 @@ triage_client.categorize_report(report_id='9999', category_id='4', tag_list=['cr
 ```
 
 ## License
-[MIT](https://choosealicense.com/licenses/mit/)
+[Gnu GPLv3](https://choosealicense.com/licenses/gpl-3.0/)
