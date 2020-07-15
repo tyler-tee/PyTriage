@@ -349,7 +349,7 @@ class TriageClient:
 
         return response.status_code == 204
 
-    def indicators_list(self):
+    def indicators_list(self) -> dict:
         """
         View all Triage Threat indicators defined in your instance
         :return:
@@ -359,6 +359,8 @@ class TriageClient:
 
         if response.status_code == 200:
             return response.json()
+        else:
+            return {'Error Code': response.status_code, 'Error Details': response.json()}
 
     def create_indicator(self, threat_level: str, threat_type: str, threat_value: str) -> typing.Tuple[bool, str]:
         """
