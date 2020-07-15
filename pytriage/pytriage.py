@@ -63,12 +63,31 @@ class TriageClient:
 
         return response.status_code == 201
 
-    def list_reports(self) -> dict:
+    def list_reports(self, location: str = '', headers_contain: str = '', headers_not_contain: str = '') -> dict:
+        """
+        Get all reports matching supplied parameters; If none are supplied, returns all reports
+        :param location: Must be Inbox, Recon, or Processed
+        :param headers_contain: Headers contain supplied string value
+        :param headers_not_contain: Headers do NOT contain the supplied string value
+        :return:
+        """
+        params = {}
 
-        response = self.session.get(self.base_api + '/reports')
+        if location:
+            params['filter[location_eq]'] = location
+
+        if headers_contain:
+            params['filter[headers_cont'] = headers_contain
+
+        if headers_not_contain:
+            params['filter[headers_not_cont'] = headers_not_contain
+
+        response = self.session.get(self.base_api + '/reports', params=params)
 
         if response.status_code == 200:
             return response.json()
+        else:
+            return {'Error': response.status_code, 'Error Body': response.json()}
 
     def get_report(self, report_id: str):
 
