@@ -1,5 +1,5 @@
 import requests
-import typing
+from typing import Union, List, Tuple
 
 
 class TriageClient:
@@ -185,7 +185,7 @@ class TriageClient:
         else:
             return {'Error Code': response.status_code, 'Error': response.json()}
 
-    def update_report(self, report_id: str, tags: typing.List) -> bool:
+    def update_report(self, report_id: str, tags: List) -> bool:
         """
         Update the tags for a single report without categorization
         :param report_id: Unique ID for target report
@@ -266,7 +266,7 @@ class TriageClient:
             return {'Error Code': response.status_code, 'Error Details': response.json()}
 
     def create_rule(self, name: str, priority: int, rule_context: str,
-                    description: str, scope: str, content: typing.Union[str, dict],
+                    description: str, scope: str, content: Union[str, dict],
                     time_to_live: str, share: bool = False) -> bool:
         """
         Create a rule in your instance with supplied parameters
@@ -303,7 +303,7 @@ class TriageClient:
         return response.status_code == 201
 
     def update_rule(self, rule_id: str, name: str, priority: int, rule_context: str,
-                    description: str, scope: str, content: typing.Union[str, dict],
+                    description: str, scope: str, content: Union[str, dict],
                     time_to_live: str, share: bool = False) -> bool:
         """
         Update a single rule in your instance with supplied parameters.
@@ -362,7 +362,7 @@ class TriageClient:
         else:
             return {'Error Code': response.status_code, 'Error Details': response.json()}
 
-    def create_indicator(self, threat_level: str, threat_type: str, threat_value: str) -> typing.Tuple[bool, str]:
+    def create_indicator(self, threat_level: str, threat_type: str, threat_value: str) -> Tuple[bool, str]:
         """
         Create a Triage Threat Indicator using supplied parameters
         :param threat_level: Level of threat - Must be Malicious, Suspicious, or Benign
@@ -395,7 +395,7 @@ class TriageClient:
         return response.status_code == 201, response.text
 
     def update_indicator(self, indicator_id: str, threat_level: str,
-                         threat_type: str, threat_value: str) -> typing.Tuple[bool, str]:
+                         threat_type: str, threat_value: str) -> Tuple[bool, str]:
         """
         Update a Triage Threat Indicator using supplied parameters
         :param indicator_id: Property set to unique identifier for the Triage Threat Indicator
@@ -438,3 +438,302 @@ class TriageClient:
         response = self.session.delete(self.base_api + f'/triage_threat_indicators{indicator_id}')
 
         return response.status_code == 204
+
+
+VALID_PARAMS = {
+    'REPORTS': ('match_priority', 'category_id', 'tags', 'fields', 'start_date', 'end_date'),
+    'UNCAT_REPORTS': ('match_priority', 'fields', 'start_date', 'end_date'),
+    'PROC_REPORTS': ('match_priority', 'category_id', 'tags', 'fields', 'start_date', 'end_date'),
+    'THREAT_TYPE': ('Subject', 'Sender', 'Domain', 'URL', 'MD5', 'SHA256'),
+    'THREAT_LEVEL': ('Malicious', 'Suspicious', 'Benign')
+}
+
+
+class V1Client:
+
+    def __init__(self, token_owner: str, api_token: str, base_url: str, verify_cert: bool = True):
+        """
+        :param token_owner: Email ddress under which the api_token was generated
+        :param api_token: ID generated during oauth key generation
+        :param base_url: Base server URL for your environment
+        :param verify_cert: Indicate whether SSL verification should be performed
+        """
+
+        self.base_url = base_url
+        self.base_api = self.base_url + '/api/public/v1'
+        self.session = requests.session()
+        self.session.headers = {'accept': 'application/json',
+                                'Authorization': f'Token token={token_owner}:{api_token}'}
+        self.session.verify = verify_cert
+
+    def list_categories(self) -> dict:
+
+        response = self.session.get(self.base_api + '/categories')
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return {'Error Code': response.status_code, 'Error Text': response.text}
+
+    def get_category(self, category_id: Union[str, int]) -> dict:
+
+        response = self.session.get(self.base_api + f'/categories/{category_id}')
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return {'Error Code': response.status_code, 'Error Text': response.text}
+
+    def list_operators(self, email_address: str = None) -> dict:
+
+        if email_address:
+            params = {'email': email_address}
+            response = self.session.get(self.base_api + '/operators', params=params)
+        else:
+            response = self.session.get(self.base_api + '/operators')
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return {'Error Code': response.status_code, 'Error Text': response.text}
+
+    def get_operator(self, operator_id: Union[str, int]) -> dict:
+
+        response = self.session.get(self.base_api + f'/operators/{operator_id}')
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return {'Error Code': response.status_code, 'Error Text': response.text}
+
+    def list_reporters(self, vip: Union[str, bool], email_address: str) -> dict:
+        params = {}
+
+        if vip:
+            params['vip'] = str(vip).lower()
+        if email_address:
+            params['email'] = email_address
+
+        response = self.session.get(self.base_api + '/reporters', params=params)
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return {'Error Code': response.status_code, 'Error Text': response.text}
+
+    def get_reporter(self, reporter_id: Union[str, int]) -> dict:
+
+        response = self.session.get(self.base_api + f'/reporters/{reporter_id}')
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return {'Error Code': response.status_code, 'Error Text': response.text}
+
+    def get_reports(self, **kwargs) -> dict:
+        for kwarg in kwargs.keys():
+            if kwarg not in VALID_PARAMS['REPORTS']:
+                print(f"Error - Invalid argument {kwarg}.\nValid args: {', '.join(VALID_PARAMS['REPORTS'])}")
+                return {'Invalid argument': kwarg}
+
+        response = self.session.get(self.base_api + '/reports', params=kwargs)
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return {'Error Code': response.status_code, 'Error Details': response.text}
+
+    def get_uncat_reports(self, **kwargs) -> dict:
+        for kwarg in kwargs.keys():
+            if kwarg not in VALID_PARAMS['UNCAT_REPORTS']:
+                print(f"Error - Invalid argument {kwarg}.\nValid args: {', '.join(VALID_PARAMS['UNCAT_REPORTS'])}")
+                return {'Invalid argument': kwarg}
+
+        response = self.session.get(self.base_api + '/inbox_reports', params=kwargs)
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return {'Error Code': response.status_code, 'Error Details': response.text}
+
+    def get_proc_reports(self, **kwargs) -> dict:
+        for kwarg in kwargs.keys():
+            if kwarg not in VALID_PARAMS['PROC_REPORTS']:
+                print(f"Error - Invalid argument {kwarg}.\nValid args: {', '.join(VALID_PARAMS['PROC_REPORTS'])}")
+                return {'Invalid argument': kwarg}
+
+        response = self.session.get(self.base_api + '/processed_reports', params=kwargs)
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return {'Error Code': response.status_code, 'Error Details': response.text}
+
+    def get_report(self, report_id: Union[str, int]) -> dict:
+        response = self.session.get(self.base_api + f'/reports/{report_id}')
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return {'Error Code': response.status_code, 'Error Details': response.text}
+
+    def get_raw_report(self, report_id: Union[str, int]) -> str:
+        response = self.session.get(self.base_api + f'/reports/{report_id}.txt')
+
+        if response == 200:
+            return response.text
+        else:
+            print(response.status_code, response.headers, response.text)
+
+    def get_report_preview(self, report_id: Union[str, int], preview_format: str) -> bytes:
+        response = self.session.get(self.base_api + f'/reports/{report_id}.{preview_format}')
+
+        if response == 200:
+            return response.content
+        else:
+            print(response.status_code, response.headers, response.text)
+
+    def get_last_report(self) -> str:
+        response = self.session.get(self.base_api + '/report_last')
+
+        if response.status_code == 200:
+            return response.json()['id']
+        else:
+            return f"Error Code: {response.status_code}\nError Details: {response.text}"
+
+    def get_last_uncat(self) -> str:
+        response = self.session.get(self.base_api + '/inbox_last')
+
+        if response.status_code == 200:
+            if response.text != 'null':
+                return response.json()['id']
+        else:
+            return f"Error Code: {response.status_code}\nError Details: {response.text}"
+
+    def get_last_proc(self) -> str:
+        response = self.session.get(self.base_api + '/processed_lalst')
+
+        if response.status_code == 200:
+            return response.json()['id']
+        else:
+            return f"Error Code: {response.status_code}\nError Details: {response.text}"
+
+    def get_report_reporters(self, start_date: str = None, end_date: str = None) -> dict:
+        params = {}
+
+        if start_date:
+            params['start_date'] = start_date
+        if end_date:
+            params['end_date'] = end_date
+
+        response = self.session.get(self.base_api + '/report_reporters')
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return {'Error Code': response.status_code, 'Error Details': response.text}
+
+    def get_rules(self, start_date: str = None, end_date: str = None) -> dict:
+        params = {}
+
+        if start_date:
+            params['start_date'] = start_date
+        if end_date:
+            params['end_date'] = end_date
+
+        response = self.session.get(self.base_api + '/rules')
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return {'Error Code': response.status_code, 'Error Details': response.text}
+
+    def get_rule(self, rule_id: Union[str, int]) -> dict:
+        response = self.session.get(self.base_api + f'/rules/{rule_id}')
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return {'Error Code': response.status_code, 'Error Details': response.text}
+
+    def get_exec_summary(self, start_date: str = None, end_date: str = None) -> dict:
+        params = {}
+
+        if start_date:
+            params['start_date'] = start_date
+        if end_date:
+            params['end_date'] = end_date
+
+        response = self.session.get(self.base_api + '/executive_summary', params=params)
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return {'Error Code': response.status_code, 'Error Details': response.text}
+
+    def get_sys_health(self):
+        response = self.session.get(self.base_api + '/status')
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return {'Error Code': response.status_code, 'Error Details': response.text}
+
+    def get_indicators(self, threat_type: str = None, threat_level: str = None,
+                       start_date: str = None, end_date: str = None):
+        params = {}
+
+        if threat_type:
+            if threat_type in VALID_PARAMS['THREAT_TYPE']:
+                params['type'] = threat_type
+            else:
+                print(f"Error - Invalid type.\nValid threat types: {', '.join(VALID_PARAMS['THREAT_TYPE'])}")
+
+        if threat_level:
+            if threat_level in VALID_PARAMS['THREAT_LEVEL']:
+                params['level'] = threat_level
+            else:
+                print(f"Error - Invalid level.\nValid threat levels: {', '.join(VALID_PARAMS['THREAT_LEVEL'])}")
+
+        if start_date:
+            params['start_date'] = start_date
+        if end_date:
+            params['end_date'] = end_date
+
+        response = self.session.get(self.base_api + '/triage_threat_indicators', params=params)
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return {'Error Code': response.status_code, 'Error Details': response.text}
+
+    def get_who_else_all(self, start_date: str = None, end_date: str = None):
+        params = {}
+
+        if start_date:
+            params['start_date'] = start_date
+        if end_date:
+            params['end_date'] = end_date
+
+        response = self.session.get(self.base_api + '/who_else_searches', params=params)
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return {'Error Code': response.status_code, 'Error Details': response.text}
+
+    def get_who_else_one(self, search_id: str):
+        response = self.session.get(self.base_api + f'/whoe_else_searches/{search_id}')
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return {'Error Code': response.status_code, 'Error Details': response.text}
+
+    def get_who_results(self, search_id: str):
+        response = self.session.get(self.base_api + f'/who_else_results/{search_id}')
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return {'Error Code': response.status_code, 'Error Details': response.text}
