@@ -449,7 +449,7 @@ VALID_PARAMS = {
 }
 
 
-class V1TriageClient:
+class TriageClientv1:
 
     def __init__(self, token_owner: str, api_token: str, base_url: str, verify_cert: bool = True):
         """
