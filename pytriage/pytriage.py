@@ -664,7 +664,7 @@ class TriageClientv1:
         """
         response = self.session.get(self.base_api + f'/reports/{report_id}.{preview_format}')
 
-        if response == 200:
+        if response.status_code == 200:
             if download:
                 with open(f'{report_id}.{preview_format}', 'wb') as f:
                     f.write(response.content)
