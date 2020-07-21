@@ -459,8 +459,7 @@ class TriageClientv1:
         :param verify_cert: Indicate whether SSL verification should be performed
         """
 
-        self.base_url = base_url
-        self.base_api = self.base_url + '/api/public/v1'
+        self.base_api = base_url + '/api/public/v1'
         self.session = requests.session()
         self.session.headers = {'accept': 'application/json',
                                 'Authorization': f'Token token={token_owner}:{api_token}'}

@@ -1,6 +1,6 @@
 # PyTriage
 
-PyTriage is a Python library for interacting with Cofense Triage's v2 API.
+PyTriage is a Python library for interacting with Cofense Triage's v1 and v2 API's.
 
 ## Supported Actions
 ### Reports
