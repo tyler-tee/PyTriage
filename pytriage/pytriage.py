@@ -636,7 +636,7 @@ class TriageClientv1:
         """
         response = self.session.get(self.base_api + f'/reports/{report_id}.txt')
 
-        if response == 200:
+        if response.status_code == 200:
             return response.text
         else:
             print(response.status_code, response.headers, response.text)
