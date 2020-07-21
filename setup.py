@@ -7,7 +7,7 @@ with open(path.join(cur_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='PyTriage',
-    version='0.2.0',
+    version='0.2.1',
     packages=['pytriage'],
     url='https://github.com/tyler-tee/pytriage',
     license='GPLv3',
