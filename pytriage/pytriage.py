@@ -449,7 +449,7 @@ VALID_PARAMS = {
 }
 
 
-class V1Client:
+class V1TriageClient:
 
     def __init__(self, token_owner: str, api_token: str, base_url: str, verify_cert: bool = True):
         """
@@ -467,6 +467,10 @@ class V1Client:
         self.session.verify = verify_cert
 
     def list_categories(self) -> dict:
+        """
+        View all categories defined in your Triage instance.
+        :return:
+        """
 
         response = self.session.get(self.base_api + '/categories')
 
@@ -476,6 +480,11 @@ class V1Client:
             return {'Error Code': response.status_code, 'Error Text': response.text}
 
     def get_category(self, category_id: Union[str, int]) -> dict:
+        """
+        View the details for a single category.
+        :param category_id: Specify category ID (may be obtaind via list_categories method). May be string or integer.
+        :return:
+        """
 
         response = self.session.get(self.base_api + f'/categories/{category_id}')
 
@@ -485,6 +494,11 @@ class V1Client:
             return {'Error Code': response.status_code, 'Error Text': response.text}
 
     def list_operators(self, email_address: str = None) -> dict:
+        """
+        View all operators provisioned in your Triage instance.
+        :param email_address: Optional - Specify operator email if desired.
+        :return:
+        """
 
         if email_address:
             params = {'email': email_address}
@@ -498,6 +512,11 @@ class V1Client:
             return {'Error Code': response.status_code, 'Error Text': response.text}
 
     def get_operator(self, operator_id: Union[str, int]) -> dict:
+        """
+        View details for a single operator.
+        :param operator_id: Specify opderator ID (can be obtained via list_operators method). May be string or integer.
+        :return:
+        """
 
         response = self.session.get(self.base_api + f'/operators/{operator_id}')
 
@@ -507,6 +526,13 @@ class V1Client:
             return {'Error Code': response.status_code, 'Error Text': response.text}
 
     def list_reporters(self, vip: Union[str, bool], email_address: str) -> dict:
+        """
+        List all reporters defined in your Triage instance.
+        :param vip: Optional - Specify whether you'd like to view only VIP's/Non-VIP's
+        :param email_address: Optional - Specify reporter email if desired.
+        :return:
+        """
+
         params = {}
 
         if vip:
@@ -522,6 +548,11 @@ class V1Client:
             return {'Error Code': response.status_code, 'Error Text': response.text}
 
     def get_reporter(self, reporter_id: Union[str, int]) -> dict:
+        """
+        View the details for a single reporter.
+        :param reporter_id: Specify reporter ID (may be obtaind from list_reporters method). Can be string or integer.
+        :return:
+        """
 
         response = self.session.get(self.base_api + f'/reporters/{reporter_id}')
 
@@ -531,6 +562,12 @@ class V1Client:
             return {'Error Code': response.status_code, 'Error Text': response.text}
 
     def get_reports(self, **kwargs) -> dict:
+        """
+        View reports in the Processed, Inbox, and Recon categories. Narrow down results with valid parameters.
+        :param kwargs: Valid args: match_priority, category_id, tags, start_date (defaults to 6 days ago), and end_date.
+        :return:
+        """
+
         for kwarg in kwargs.keys():
             if kwarg not in VALID_PARAMS['REPORTS']:
                 print(f"Error - Invalid argument {kwarg}.\nValid args: {', '.join(VALID_PARAMS['REPORTS'])}")
@@ -544,6 +581,11 @@ class V1Client:
             return {'Error Code': response.status_code, 'Error Details': response.text}
 
     def get_uncat_reports(self, **kwargs) -> dict:
+        """
+        View uncategorized reports (these would be sitting in Inbox or Recon). Narrow results if desired.
+        :param kwargs: Valid args: match_priority, start_date (defaults to 6 days ago), and end_date.
+        :return:
+        """
         for kwarg in kwargs.keys():
             if kwarg not in VALID_PARAMS['UNCAT_REPORTS']:
                 print(f"Error - Invalid argument {kwarg}.\nValid args: {', '.join(VALID_PARAMS['UNCAT_REPORTS'])}")
@@ -557,6 +599,11 @@ class V1Client:
             return {'Error Code': response.status_code, 'Error Details': response.text}
 
     def get_proc_reports(self, **kwargs) -> dict:
+        """
+        View reports which have been categorized. Narrow results if desired with valid arguments.
+        :param kwargs: Valid args: match_priority, category_id, tags, start_date (defaults to 6 days ago), and end_date.
+        :return:
+        """
         for kwarg in kwargs.keys():
             if kwarg not in VALID_PARAMS['PROC_REPORTS']:
                 print(f"Error - Invalid argument {kwarg}.\nValid args: {', '.join(VALID_PARAMS['PROC_REPORTS'])}")
@@ -570,6 +617,11 @@ class V1Client:
             return {'Error Code': response.status_code, 'Error Details': response.text}
 
     def get_report(self, report_id: Union[str, int]) -> dict:
+        """
+        View metadata related to a single report.
+        :param report_id: Specify the report ID - May be string or integer.
+        :return:
+        """
         response = self.session.get(self.base_api + f'/reports/{report_id}')
 
         if response.status_code == 200:
@@ -578,6 +630,11 @@ class V1Client:
             return {'Error Code': response.status_code, 'Error Details': response.text}
 
     def get_raw_report(self, report_id: Union[str, int]) -> str:
+        """
+        Retrieve the raw text for a single report by specifying its ID.
+        :param report_id: Unique report identifier - May be string or integer.
+        :return:
+        """
         response = self.session.get(self.base_api + f'/reports/{report_id}.txt')
 
         if response == 200:
@@ -585,15 +642,44 @@ class V1Client:
         else:
             print(response.status_code, response.headers, response.text)
 
-    def get_report_preview(self, report_id: Union[str, int], preview_format: str) -> bytes:
+    def get_attachment(self, attachment_id: Union[str, int]) -> bytes:
+        """
+        Retrieve an attachment's bytestring by specifying its ID. You can write the output to disk if desired.
+        :param attachment_id: Unique attachment identifier - May be string or integer.
+        :return:
+        """
+        response = self.session.get(self.base_api + f'/attachment/{attachment_id}')
+
+        if response.status_code == 200:
+            return response.content
+        else:
+            print(f"Error: {response.status_code}. Error Details: {response.text}")
+
+    def get_report_preview(self, report_id: Union[str, int], preview_format: str, download: bool = True) -> bytes:
+        """
+        Retrieve the preview image for a single report.
+        :param report_id: Unique report identifier - May be string or integer.
+        :param preview_format: Image format - May be jpg or png.
+        :param download: Download image to disk - Turn this off if you're just interested in the bytestring.
+        :return:
+        """
         response = self.session.get(self.base_api + f'/reports/{report_id}.{preview_format}')
 
         if response == 200:
+            if download:
+                with open(f'{report_id}.{preview_format}', 'wb') as f:
+                    f.write(response.content)
+
             return response.content
+
         else:
             print(response.status_code, response.headers, response.text)
 
     def get_last_report(self) -> str:
+        """
+        View the last email reported to Triage, regardless of processed status.
+        :return:
+        """
         response = self.session.get(self.base_api + '/report_last')
 
         if response.status_code == 200:
@@ -602,6 +688,10 @@ class V1Client:
             return f"Error Code: {response.status_code}\nError Details: {response.text}"
 
     def get_last_uncat(self) -> str:
+        """
+        View the last unprocessed email reported to Triage.
+        :return:
+        """
         response = self.session.get(self.base_api + '/inbox_last')
 
         if response.status_code == 200:
@@ -611,7 +701,11 @@ class V1Client:
             return f"Error Code: {response.status_code}\nError Details: {response.text}"
 
     def get_last_proc(self) -> str:
-        response = self.session.get(self.base_api + '/processed_lalst')
+        """
+        View the last processed email reported to Triage.
+        :return:
+        """
+        response = self.session.get(self.base_api + '/processed_last')
 
         if response.status_code == 200:
             return response.json()['id']
@@ -619,6 +713,12 @@ class V1Client:
             return f"Error Code: {response.status_code}\nError Details: {response.text}"
 
     def get_report_reporters(self, start_date: str = None, end_date: str = None) -> dict:
+        """
+        View metadata related to reporters in a certain timeframe - Default is 6 days prior to today.
+        :param start_date: Defaults to 6 days ago.
+        :param end_date: Defaults to today.
+        :return:
+        """
         params = {}
 
         if start_date:
@@ -634,6 +734,12 @@ class V1Client:
             return {'Error Code': response.status_code, 'Error Details': response.text}
 
     def get_rules(self, start_date: str = None, end_date: str = None) -> dict:
+        """
+        View all rules defined in your Triage instance - By timeframe if desired.
+        :param start_date: Optional - Defaults to 6 days prior to today.
+        :param end_date: Optional - Defaults to today.
+        :return:
+        """
         params = {}
 
         if start_date:
@@ -649,6 +755,11 @@ class V1Client:
             return {'Error Code': response.status_code, 'Error Details': response.text}
 
     def get_rule(self, rule_id: Union[str, int]) -> dict:
+        """
+        View the metadata for a single rule.
+        :param rule_id: Specify the rule's unique ID - May be string or integer.
+        :return:
+        """
         response = self.session.get(self.base_api + f'/rules/{rule_id}')
 
         if response.status_code == 200:
@@ -657,6 +768,12 @@ class V1Client:
             return {'Error Code': response.status_code, 'Error Details': response.text}
 
     def get_exec_summary(self, start_date: str = None, end_date: str = None) -> dict:
+        """
+        Retrieve the executive summary which includes statistics regarding report ingestion and processing.
+        :param start_date: Optional - Defaults to 6 days prior.
+        :param end_date: Optional - Defaults to today.
+        :return:
+        """
         params = {}
 
         if start_date:
@@ -671,7 +788,11 @@ class V1Client:
         else:
             return {'Error Code': response.status_code, 'Error Details': response.text}
 
-    def get_sys_health(self):
+    def get_sys_health(self) -> dict:
+        """
+        View system statistics for the appliance on which Triage is running.
+        :return:
+        """
         response = self.session.get(self.base_api + '/status')
 
         if response.status_code == 200:
@@ -680,7 +801,15 @@ class V1Client:
             return {'Error Code': response.status_code, 'Error Details': response.text}
 
     def get_indicators(self, threat_type: str = None, threat_level: str = None,
-                       start_date: str = None, end_date: str = None):
+                       start_date: str = None, end_date: str = None) -> dict:
+        """
+        Retrieve threat indicators defined in your Triage instance.
+        :param threat_type: Optional - Valid types: Subject, Sender, Domain, URL, MD5, or SHA256
+        :param threat_level: Optional - Valid levels: Malicious, Suspicious, or Benign
+        :param start_date: Optional - Defaults to 6 days ago
+        :param end_date: Optional - Defaults to today.
+        :return:
+        """
         params = {}
 
         if threat_type:
@@ -707,7 +836,13 @@ class V1Client:
         else:
             return {'Error Code': response.status_code, 'Error Details': response.text}
 
-    def get_who_else_all(self, start_date: str = None, end_date: str = None):
+    def get_who_else_all(self, start_date: str = None, end_date: str = None) -> dict:
+        """
+        View all Who Else searches conducted in a specified timeframe. Defaults to 6 days ago to today.
+        :param start_date: Optional - Defaults to 6 days ago.
+        :param end_date: Optional - Defaults to today.
+        :return:
+        """
         params = {}
 
         if start_date:
@@ -722,7 +857,12 @@ class V1Client:
         else:
             return {'Error Code': response.status_code, 'Error Details': response.text}
 
-    def get_who_else_one(self, search_id: str):
+    def get_who_else_one(self, search_id: str) -> dict:
+        """
+        View the metadata related to a single Who Else search.
+        :param search_id: Specify unique identifier - May be string or integer.
+        :return:
+        """
         response = self.session.get(self.base_api + f'/whoe_else_searches/{search_id}')
 
         if response.status_code == 200:
@@ -730,7 +870,12 @@ class V1Client:
         else:
             return {'Error Code': response.status_code, 'Error Details': response.text}
 
-    def get_who_results(self, search_id: str):
+    def get_who_results(self, search_id: str) -> dict:
+        """
+        View the results for a single Who Else search by specifying its ID.
+        :param search_id: Unique search identifier - May be string or integer.
+        :return:
+        """
         response = self.session.get(self.base_api + f'/who_else_results/{search_id}')
 
         if response.status_code == 200:
