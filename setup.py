@@ -7,13 +7,13 @@ with open(path.join(cur_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='PyTriage',
-    version='0.1.1',
+    version='0.2.0',
     packages=['pytriage'],
     url='https://github.com/tyler-tee/pytriage',
     license='GPLv3',
     author='Tyler Talaga',
     author_email='ttalaga@wgu.edu',
-    description='PyTriage is a Python library for interacting with Cofense Triage\'s v2 API.',
+    description='PyTriage is a Python library for interacting with Cofense Triage\'s v1 and v2 API\'s.',
     long_description=long_description,
     long_description_content_type='text/markdown'
 )
