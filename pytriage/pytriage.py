@@ -206,7 +206,8 @@ class TriageClient:
 
         return response.status_code == 200
 
-    def categorize_report(self, report_id: str, category_id: str, tag_list='', response_id: str = '') -> bool:
+    def categorize_report(self, report_id: str, category_id: str,
+                          tag_list: List = None, response_id: str = '') -> bool:
         """
         Categorize a single report by ID
         :param report_id: Unique identifier for target report
