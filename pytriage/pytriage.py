@@ -22,7 +22,7 @@ class TriageClient:
         self.session = requests.session()
         self.session.verify = verify_cert
 
-    def authenticate(self) -> bool:
+    def authenticate(self):
         """
         Authenticate to the v2 endpoint and retrieve a JWT for subsequent interaction
         :return:
@@ -42,7 +42,7 @@ class TriageClient:
                 'Authorization': f"Bearer {response.json()['access_token']}"
             }
 
-        return response.status_code == 200
+            return self
 
     def get_categories(self) -> dict:
         """
@@ -625,9 +625,28 @@ class TriageClientv1:
         response = self.session.get(self.base_api + f'/reports/{report_id}')
 
         if response.status_code == 200:
-            return response.json()
+            return response.json()[0]
         else:
             return {'Error Code': response.status_code, 'Error Details': response.text}
+
+    def get_report_urls(self, report: dict = None, report_id: str = None) -> List:
+        """
+        Extract the URL's from a pre-retrieved report or first fetch a report by supplying its ID.
+        :param report: Supply a report retrieved via the get_report() method OR...
+        :param report_id: Supply a report ID with which a report will be retrieved.
+        :return:
+        """
+        if report:
+            url_lst = [url['url'] for url in report['email_urls']]
+            return url_lst
+
+        elif report_id:
+            report = self.get_report(report_id=report_id)
+            url_lst = [url['url'] for url in report['email_urls']]
+            return url_lst
+
+        else:
+            print("[*] Error! Must supply retrieved report JSON or report ID.")
 
     def get_raw_report(self, report_id: Union[str, int]) -> str:
         """
